@@ -1,7 +1,7 @@
 """
 PostgreSQL client for storing metadata and job status.
 """
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import Column, String, Integer, DateTime, Text, JSON, select
@@ -12,7 +12,7 @@ from app.core.config import settings
 Base = declarative_base()
 
 
-class CrawlJob(Base):
+class CrawlJob(Base):  # type: ignore[valid-type,misc]
     """Model for crawl jobs."""
     __tablename__ = "crawl_jobs"
     
@@ -29,7 +29,7 @@ class CrawlJob(Base):
     error = Column(Text, nullable=True)
 
 
-class Document(Base):
+class Document(Base):  # type: ignore[valid-type,misc]
     """Model for document metadata."""
     __tablename__ = "documents"
     
@@ -85,7 +85,7 @@ class PostgresClient:
         """Get a new database session."""
         if not self.session_factory:
             raise RuntimeError("Database not connected. Call connect() first.")
-        return self.session_factory()
+        return self.session_factory()  # type: ignore[no-any-return]
     
     async def create_job(self, job_data: Dict[str, Any]) -> str:
         """
@@ -101,7 +101,7 @@ class PostgresClient:
             job = CrawlJob(**job_data)
             session.add(job)
             await session.commit()
-            return job.id
+            return str(job.id)
     
     async def get_job(self, job_id: str) -> Optional[Dict[str, Any]]:
         """Get job by ID."""
@@ -141,7 +141,7 @@ class PostgresClient:
             job = result.scalar_one_or_none()
             
             if job:
-                job.status = status
+                job.status = status  # type: ignore[assignment]
                 for key, value in kwargs.items():
                     if hasattr(job, key):
                         setattr(job, key, value)

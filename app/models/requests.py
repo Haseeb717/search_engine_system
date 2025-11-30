@@ -2,8 +2,6 @@
 Pydantic request models for API endpoints.
 """
 from pydantic import BaseModel, Field, HttpUrl
-from typing import Optional
-from datetime import datetime
 
 
 class SearchRequest(BaseModel):

@@ -5,7 +5,7 @@ This worker picks jobs from RabbitMQ and fetches web pages.
 import asyncio
 import json
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import httpx
 from bs4 import BeautifulSoup
 
@@ -153,7 +153,7 @@ class CrawlerWorker:
             # Reject and requeue the job
             rabbitmq_client.reject_job(method.delivery_tag, requeue=True)
     
-    async def start(self, queue_name: str = None):
+    async def start(self, queue_name: Optional[str] = None):
         """
         Start consuming jobs from the queue.
         

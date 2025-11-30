@@ -2,7 +2,6 @@
 Tests for search endpoint.
 """
 import pytest
-from unittest.mock import patch, AsyncMock
 
 
 def test_search_endpoint_success(test_client, sample_search_request):

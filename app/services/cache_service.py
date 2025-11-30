@@ -4,7 +4,6 @@ Cache service for managing search result caching.
 from typing import Optional, Dict, Any
 from app.db.redis_client import redis_client
 import hashlib
-import json
 
 
 class CacheService:

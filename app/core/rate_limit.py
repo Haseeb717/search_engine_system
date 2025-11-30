@@ -80,7 +80,8 @@ class RateLimiter:
         """Get TTL for a key."""
         if redis_client.client:
             ttl = await redis_client.client.ttl(key)
-            return ttl if ttl > 0 else self.window_size
+            if isinstance(ttl, int) and ttl > 0:
+                return ttl
         return self.window_size
 
 
@@ -103,12 +104,8 @@ async def check_rate_limit(request: Request, api_key_data: dict) -> None:
     identifier = api_key_data.get("name", "anonymous")
     limit = api_key_data.get("rate_limit", 100)
     
-    # Check rate limit
-    rate_info = await rate_limiter.check_rate_limit(identifier, limit)
-    
-    # Add rate limit headers to response (would need middleware for this)
-    # For now, just validate the limit
-    return rate_info
+    # Check rate limit (raises HTTPException if exceeded)
+    await rate_limiter.check_rate_limit(identifier, limit)
 
 
 # Example usage in endpoints:

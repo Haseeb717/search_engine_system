@@ -152,7 +152,8 @@ class RabbitMQClient:
             durable=True,
             passive=True  # Don't create, just get info
         )
-        return method.method.message_count
+        count = method.method.message_count
+        return int(count) if count is not None else 0
 
 
 # Global RabbitMQ client instance

@@ -91,7 +91,8 @@ class RedisClient:
         if not self.client:
             return False
         
-        return await self.client.exists(key) > 0
+        result = await self.client.exists(key)
+        return bool(result) if result is not None else False
     
     async def clear_pattern(self, pattern: str) -> int:
         """
@@ -108,7 +109,8 @@ class RedisClient:
         
         keys = await self.client.keys(pattern)
         if keys:
-            return await self.client.delete(*keys)
+            result = await self.client.delete(*keys)
+            return int(result) if result is not None else 0
         return 0
 
 

@@ -1,7 +1,6 @@
 """
 Tests for job status endpoint.
 """
-import pytest
 from unittest.mock import patch, AsyncMock
 
 

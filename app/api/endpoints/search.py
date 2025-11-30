@@ -111,7 +111,7 @@ async def search(
             }
         )
         
-    except ConnectionError as e:
+    except ConnectionError:
         # Handle connection errors to external services
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

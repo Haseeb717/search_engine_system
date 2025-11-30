@@ -124,7 +124,7 @@ async def get_job_status(
         # Re-raise HTTP exceptions
         raise
         
-    except ConnectionError as e:
+    except ConnectionError:
         # Handle database connection errors
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

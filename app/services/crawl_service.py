@@ -3,7 +3,7 @@ Crawl service for handling crawl and re-crawl requests.
 """
 import uuid
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
+from typing import Optional
 from app.db.postgres_client import postgres_client
 from app.db.rabbitmq_client import rabbitmq_client
 from app.models.responses import JobResponse, JobStatusResponse

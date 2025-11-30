@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
+from typing import Dict, Any
 import time
 
 from app.core.config import settings
@@ -186,7 +187,7 @@ async def health_check():
     Health check endpoint for monitoring and load balancers.
     Returns the status of all connected services.
     """
-    health_status = {
+    health_status: Dict[str, Any] = {
         "status": "healthy",
         "timestamp": time.time(),
         "services": {}
@@ -194,17 +195,25 @@ async def health_check():
     
     # Check Redis
     try:
-        await redis_client.client.ping()
-        health_status["services"]["redis"] = "connected"
-    except:
+        if redis_client.client:
+            await redis_client.client.ping()
+            health_status["services"]["redis"] = "connected"
+        else:
+            health_status["services"]["redis"] = "disconnected"
+            health_status["status"] = "degraded"
+    except Exception:
         health_status["services"]["redis"] = "disconnected"
         health_status["status"] = "degraded"
     
     # Check Elasticsearch
     try:
-        await es_client.client.ping()
-        health_status["services"]["elasticsearch"] = "connected"
-    except:
+        if es_client.client:
+            await es_client.client.ping()
+            health_status["services"]["elasticsearch"] = "connected"
+        else:
+            health_status["services"]["elasticsearch"] = "disconnected"
+            health_status["status"] = "degraded"
+    except Exception:
         health_status["services"]["elasticsearch"] = "disconnected"
         health_status["status"] = "degraded"
     
@@ -215,7 +224,7 @@ async def health_check():
         else:
             health_status["services"]["postgresql"] = "disconnected"
             health_status["status"] = "degraded"
-    except:
+    except Exception:
         health_status["services"]["postgresql"] = "disconnected"
         health_status["status"] = "degraded"
     
@@ -226,7 +235,7 @@ async def health_check():
         else:
             health_status["services"]["rabbitmq"] = "disconnected"
             health_status["status"] = "degraded"
-    except:
+    except Exception:
         health_status["services"]["rabbitmq"] = "disconnected"
         health_status["status"] = "degraded"
     

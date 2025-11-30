@@ -102,7 +102,7 @@ async def recrawl_page(
         
         # Create re-crawl job through service layer
         job = await crawl_service.create_recrawl_job(
-            url=request.url,
+            url=str(request.url),
             priority=request.priority
         )
         
@@ -123,7 +123,7 @@ async def recrawl_page(
             }
         )
         
-    except ConnectionError as e:
+    except ConnectionError:
         # Handle connection errors (database, queue)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

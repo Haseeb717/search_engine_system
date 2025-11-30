@@ -4,7 +4,6 @@ This would typically run as a separate service consuming from a processing queue
 """
 import re
 from typing import List, Dict, Any
-from bs4 import BeautifulSoup
 
 
 class TextProcessor:

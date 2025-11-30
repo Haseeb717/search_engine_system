@@ -76,7 +76,7 @@ class ElasticsearchClient:
             from_=from_
         )
         
-        return result
+        return dict(result) if result else {"hits": {"hits": [], "total": {"value": 0}}}
     
     async def index_document(self, doc_id: str, document: Dict[str, Any]) -> bool:
         """
@@ -120,7 +120,7 @@ class ElasticsearchClient:
             operations.append(doc)
         
         result = await self.client.bulk(operations=operations)
-        return result
+        return dict(result) if result else {"errors": True, "items": []}
     
     async def get_document(self, doc_id: str) -> Optional[Dict[str, Any]]:
         """Get document by ID."""
@@ -129,7 +129,10 @@ class ElasticsearchClient:
         
         try:
             result = await self.client.get(index=self.index_name, id=doc_id)
-            return result['_source']
+            if result and '_source' in result:
+                source = result['_source']
+                return dict(source) if source else None
+            return None
         except Exception:
             return None
     

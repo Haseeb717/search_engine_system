@@ -2,7 +2,7 @@
 Tests for service layer.
 """
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 
 @pytest.mark.asyncio
@@ -32,13 +32,13 @@ async def test_cache_service_set_and_get():
         mock_set.return_value = True
         
         # Set cache
-        result = await cache_service.set_search_results(
+        await cache_service.set_search_results(
             "test query", 1, 10, {"test": "data"}
         )
         assert mock_set.called
         
         # Get cache
-        cached = await cache_service.get_search_results("test query", 1, 10)
+        await cache_service.get_search_results("test query", 1, 10)
         assert mock_get.called
 
 
