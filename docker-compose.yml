@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  # Redis - Cache Layer
+  redis:
+    image: redis:7-alpine
+    container_name: search-engine-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - search-engine-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Elasticsearch - Search Engine
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    container_name: search-engine-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - search-engine-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # PostgreSQL - Metadata Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: search-engine-postgres
+    environment:
+      POSTGRES_DB: search_engine
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - search-engine-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ - Message Queue
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: search-engine-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - search-engine-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # FastAPI Application
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: search-engine-api
+    environment:
+      - REDIS_HOST=redis
+      - ELASTICSEARCH_HOST=elasticsearch
+      - POSTGRES_HOST=postgres
+      - RABBITMQ_HOST=rabbitmq
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - search-engine-network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Crawler Worker (can scale with --scale crawler=N)
+  crawler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - REDIS_HOST=redis
+      - ELASTICSEARCH_HOST=elasticsearch
+      - POSTGRES_HOST=postgres
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
+      - postgres
+    networks:
+      - search-engine-network
+    command: python -m app.workers.crawler
+    deploy:
+      replicas: 2  # Run 2 crawler workers
+
+networks:
+  search-engine-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  elasticsearch-data:
+  postgres-data:
+  rabbitmq-data:
